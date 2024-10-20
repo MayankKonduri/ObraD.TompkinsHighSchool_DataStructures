@@ -1,0 +1,61 @@
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
+public class ClientsListener implements Runnable {
+    private ObjectInputStream inputStream = null;
+    private ObjectOutputStream outputStream = null;
+    private Connect4Frame connect4Frame = null;
+
+    public ClientsListener(ObjectInputStream inputStream, ObjectOutputStream outputStream, Connect4Frame connect4Frame) {
+        this.inputStream = inputStream;
+        this.outputStream = outputStream;
+        this.connect4Frame = connect4Frame;
+    }
+
+    public void run() {
+        try {
+            while (true) {
+                CommandFromServer commandFromServer = (CommandFromServer) inputStream.readObject();
+
+                if (commandFromServer.getCommand() == CommandFromServer.CLOSING) {
+                    try {
+                        connect4Frame.closing();
+                    } catch (InterruptedException e) {
+                        System.out.println("Exception exit");
+                    }
+                }
+                if (commandFromServer.getCommand() == CommandFromServer.CONFIRMRESET) {
+                    connect4Frame.resetGrid();
+                    connect4Frame.setTurn('X');
+                    connect4Frame.repaint();
+                }
+                if (commandFromServer.getCommand() == CommandFromServer.RESET) {
+                    if (!connect4Frame.getSentResetRequest()) {
+                        connect4Frame.initializeConfirm("Your op would like to rematch Press OK to accept a rematch, else exit out the pop up", "Rematch Request");
+                    }
+                    connect4Frame.repaint();
+                } else if (commandFromServer.getCommand() == CommandFromServer.X_TURN) {
+                    connect4Frame.setTurn('X');
+                } else if (commandFromServer.getCommand() == CommandFromServer.O_TURN) {
+                    connect4Frame.setTurn('O');
+                } else if (commandFromServer.getCommand() == CommandFromServer.MOVE) {
+                    String data = commandFromServer.getData();
+                    int c = data.charAt(0) - '0';
+                    int r = data.charAt(1) - '0';
+                    connect4Frame.makeMove(c, r, data.charAt(2));
+                } else if (commandFromServer.getCommand() == CommandFromServer.TIE) {
+                    connect4Frame.setText("Tie game.");
+                    connect4Frame.setTurn('e');
+                } else if (commandFromServer.getCommand() == CommandFromServer.X_WINS) {
+                    connect4Frame.setText("Red wins!");
+                    connect4Frame.setTurn('e');
+                } else if (commandFromServer.getCommand() == CommandFromServer.O_WINS) {
+                    connect4Frame.setText("Yellow wins!");
+                    connect4Frame.setTurn('e');
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}

@@ -1,0 +1,311 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+
+public class Connect4Frame extends JFrame implements KeyListener, WindowListener, MouseListener {
+    private String text = "";
+    private char player;
+    private int circleSize = 40;
+    private GameData gameData = null;
+    private long startTime = -1;
+    private boolean sentResetRequest = false;
+    private boolean sendingConfirmReset = false;
+    ObjectOutputStream outputStream;
+    private char turn;
+    private boolean repaintNeeded = false;
+
+    public Connect4Frame(GameData gameData, ObjectOutputStream outputStream, char player) {
+        super("Connect 4 Game");
+        this.gameData = gameData;
+        this.outputStream = outputStream;
+        this.player = player;
+        addKeyListener(this);
+        addMouseListener(this);
+        addWindowListener(this);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setSize(410, 450);
+        setResizable(false);
+        setAlwaysOnTop(true);
+        setVisible(true);
+    }
+
+    
+    public void paint(Graphics g) {
+        Image offScreenBuffer = createImage(getWidth(), getHeight());
+        Graphics offScreenGraphics = offScreenBuffer.getGraphics();
+
+        offScreenGraphics.setColor(new Color(173, 216, 230)); 
+        offScreenGraphics.fillRect(0, 0, getWidth(), getHeight());
+
+        offScreenGraphics.setColor(Color.BLUE); 
+        int borderThickness = 8; 
+        int boardWidth = gameData.getGrid()[0].length * 50;
+        int boardHeight = gameData.getGrid().length * 50;
+        offScreenGraphics.fillRect(30 - borderThickness, 120 - borderThickness, boardWidth + 2 * borderThickness, boardHeight + 2 * borderThickness);
+
+        int actualR = 0;
+        for (int r = gameData.getGrid().length - 1; r >= 0; r--) {
+            for (int c = 0; c < gameData.getGrid()[0].length; c++) {
+                offScreenGraphics.setColor(Color.WHITE);
+                offScreenGraphics.fillOval(c * 50 + 30, actualR * 50 + 120, circleSize, circleSize);
+
+                if (gameData.getGrid()[r][c] == 'X') {
+                    offScreenGraphics.setColor(Color.RED);
+                } else if (gameData.getGrid()[r][c] == 'O') {
+                    offScreenGraphics.setColor(Color.YELLOW);
+                }
+                offScreenGraphics.fillOval(c * 50 + 30, actualR * 50 + 120, circleSize, circleSize);
+
+                Graphics2D g2d = (Graphics2D) offScreenGraphics;
+                g2d.setStroke(new BasicStroke(borderThickness)); // Set thickness
+                offScreenGraphics.setColor(Color.BLUE);
+                offScreenGraphics.drawOval(c * 50 + 30, actualR * 50 + 120, circleSize, circleSize);
+            }
+            actualR++;
+        }
+
+        offScreenGraphics.setColor(Color.BLACK); 
+        offScreenGraphics.setFont(new Font("Arial", Font.BOLD, 20));
+        FontMetrics fm = offScreenGraphics.getFontMetrics();
+        int textWidth = fm.stringWidth(text);
+        int x = (getWidth() - textWidth) / 2;
+        offScreenGraphics.drawString(text, x, 90);
+
+        g.drawImage(offScreenBuffer, 0, 0, this);
+    }
+
+
+
+    public void setText(String text) {
+        this.text = text;
+        repaint();
+    }
+
+    public void setTurn(char t) {
+        turn = t;
+        if (t == player)
+            text = "Your turn";
+        else {
+            if (t == 'e') {
+            } else {
+                if (t == 'X') {
+                    text = "Red's turn";
+                } else {
+                    text = "Yellow's turn";
+                }
+            }
+        }
+        repaint();
+    }
+
+    public void makeMove(int c, int r, char letter) {
+        gameData.getGrid()[r][c] = letter;
+        repaint();
+    }
+
+    @Override
+    public void keyTyped(KeyEvent event) {
+        char key = event.getKeyChar();
+        int r;
+        if (player != turn) {
+            return;
+        }
+        switch (key) {
+            case '1':
+                r = 1;
+                break;
+            case '2':
+                r = 2;
+                break;
+            case '3':
+                r = 3;
+                break;
+            case '4':
+                r = 4;
+                break;
+            case '5':
+                r = 5;
+                break;
+            case '6':
+                r = 6;
+                break;
+            case '7':
+                r = 7;
+                break;
+            default:
+                r = -1;
+        }
+        if (r != -1) {
+            int row = gameData.addToLowest(r, player);
+            int col = r - 1;
+            if (row != -1) {
+                try {
+                    outputStream.writeObject(new CommandFromClient(CommandFromClient.MOVE, "" + col + row + player));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            repaint();
+        }
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+    }
+
+    @Override
+    public void windowOpened(WindowEvent e) {
+    }
+
+    @Override
+    public void windowClosing(WindowEvent e) {
+        try {
+            outputStream.writeObject(new CommandFromClient(CommandFromClient.CLOSING, "" + player));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    @Override
+    public void windowClosed(WindowEvent e) {
+    }
+
+    @Override
+    public void windowIconified(WindowEvent e) {
+    }
+
+    @Override
+    public void windowDeiconified(WindowEvent e) {
+    }
+
+    @Override
+    public void windowActivated(WindowEvent e) {
+    }
+
+    @Override
+    public void windowDeactivated(WindowEvent e) {
+    }
+
+    public void closing() throws InterruptedException {
+        startTime = System.currentTimeMillis();
+        long prev = -1;
+        while (true) {
+            long timepassed = System.currentTimeMillis() - startTime;
+            long secondspassed = timepassed / 1000;
+            if (secondspassed > prev) {
+                text = "Other Client Disconnected. Closing in: " + (5 - secondspassed);
+                prev = secondspassed;
+                repaint();
+            }
+            if (secondspassed >= 6) {
+                break;
+            }
+        }
+        System.exit(0);
+    }
+
+    public void resetGrid() {
+        gameData.reset();
+        startTime = -1;
+        sentResetRequest = false;
+        sendingConfirmReset = false;
+    }
+
+    public void initializeConfirm(String m, String title) {
+        sendingConfirmReset = true;
+        if (gameData.isWinner('X') || gameData.isWinner('O')) {
+            text = "Right click to accept the reset request.";
+        } else {
+            if (player == 'X') {
+                text = "Sent request to restart. Waiting for confirmation...";
+            } else {
+                text = "Waiting for the other player to accept the request...";
+            }
+        }
+        repaint();
+    }
+
+
+
+    public boolean getSentResetRequest() {
+        return sentResetRequest;
+    }
+
+    public void mouseClicked(MouseEvent e) {
+        if (SwingUtilities.isRightMouseButton(e)) {
+            if (gameData.isWinner('X') || gameData.isWinner('O') || gameData.isCat()) {
+                if (sendingConfirmReset) {
+                    try {
+                        outputStream.writeObject(new CommandFromClient(CommandFromClient.CONFIRM, ""));
+                    } catch (IOException er) {
+                        er.printStackTrace();
+                    }
+                    return;
+                }
+                sentResetRequest = true;
+                try {
+                    outputStream.writeObject(new CommandFromClient(CommandFromClient.RESTART, ""));
+                } catch (Exception er) {
+                    er.printStackTrace();
+                }
+            }
+            return;
+        }
+        if (player != turn)
+            return;
+        if (gameData.isWinner('X') || gameData.isWinner('O') || gameData.isCat())
+            return;
+        int x = e.getX();
+        int column = (x - 30) / 50;
+        if (column >= 0 && column < 7) {
+            int row = gameData.addToLowest(column + 1, player);
+            if (row != -1) {
+                try {
+                    outputStream.writeObject(new CommandFromClient(CommandFromClient.MOVE, "" + column + row + player));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
+
+
+    public void mousePressed(MouseEvent e) {
+    }
+
+    public void mouseReleased(MouseEvent e) {
+    }
+
+    public void mouseEntered(MouseEvent e) {
+    }
+
+    public void mouseExited(MouseEvent e) {
+    }
+
+    private void resetGame() {
+        if (player == turn) {
+            if (gameData.isWinner('X') || gameData.isWinner('O') || gameData.isCat()) {
+                if (sendingConfirmReset) {
+                    try {
+                        outputStream.writeObject(new CommandFromClient(CommandFromClient.CONFIRM, ""));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return;
+                }
+                sentResetRequest = true;
+                try {
+                    outputStream.writeObject(new CommandFromClient(CommandFromClient.RESTART, ""));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+}

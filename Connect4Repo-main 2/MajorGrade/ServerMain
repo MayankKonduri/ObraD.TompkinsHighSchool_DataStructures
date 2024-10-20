@@ -1,0 +1,32 @@
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class ServerMain {
+    public static void main(String[] args) {
+        try {
+            ServerSocket serverSocket = new ServerSocket(8011);
+            Socket xSocket = serverSocket.accept();
+            ObjectOutputStream xOutputStream = new ObjectOutputStream(xSocket.getOutputStream());
+            ObjectInputStream xInputStream = new ObjectInputStream(xSocket.getInputStream());
+            xOutputStream.writeObject(new CommandFromServer(CommandFromServer.CONNECTED_AS_X, null));
+            System.out.println("X has Connected.");
+            ServersListener serversListener = new ServersListener(xInputStream, xOutputStream, 'X');
+            Thread thread = new Thread(serversListener);
+            thread.start();
+            Socket oSocket = serverSocket.accept();
+            ObjectOutputStream oOutputStream = new ObjectOutputStream(oSocket.getOutputStream());
+            ObjectInputStream oInputStream = new ObjectInputStream(oSocket.getInputStream());
+            oOutputStream.writeObject(new CommandFromServer(CommandFromServer.CONNECTED_AS_O, null));
+            System.out.println("O has Connected.");
+            serversListener = new ServersListener(oInputStream, oOutputStream, 'O');
+            thread = new Thread(serversListener);
+            thread.start();
+            xOutputStream.writeObject(new CommandFromServer(CommandFromServer.X_TURN, null));
+            oOutputStream.writeObject(new CommandFromServer(CommandFromServer.X_TURN, null));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}

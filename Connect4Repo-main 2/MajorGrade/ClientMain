@@ -1,0 +1,30 @@
+import java.io.*;
+import java.net.Socket;
+
+public class ClientMain {
+    public static void main(String[] args) {
+        try {
+            GameData uniqueGameData = new GameData();
+
+            Socket clientSocket = new Socket("127.0.0.1", 8011);
+            ObjectInputStream clientInputStream = new ObjectInputStream(clientSocket.getInputStream());
+            ObjectOutputStream clientOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+
+            CommandFromServer initialCommand = (CommandFromServer) clientInputStream.readObject();
+            Connect4Frame uniqueFrame;
+
+            if (initialCommand.getCommand() == CommandFromServer.CONNECTED_AS_X) {
+                uniqueFrame = new Connect4Frame(uniqueGameData, clientOutputStream, 'X');
+                uniqueFrame.setText("Waiting for the Yellow (opponent) to join...");
+            } else {
+                uniqueFrame = new Connect4Frame(uniqueGameData, clientOutputStream, 'O');
+            }
+
+            ClientsListener clientsListener = new ClientsListener(clientInputStream, clientOutputStream, uniqueFrame);
+            Thread listenerThread = new Thread(clientsListener);
+            listenerThread.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
