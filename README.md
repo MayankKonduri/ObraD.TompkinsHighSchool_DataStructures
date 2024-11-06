@@ -4,3 +4,10 @@ Welcome to my **Computer Science Data Structures** GitHub repository! This repos
 
 ## Programmer
 - Mayank Konduri
+
+# Running the Code
+
+```bash
+git clone https://github.com/yourusername/ObraD.TompkinsHighSchool_DataStructures
+ls
+python3 [Code To Be Compiled]
