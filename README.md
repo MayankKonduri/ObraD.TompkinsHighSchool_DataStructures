@@ -1,4 +1,4 @@
-# Computer Science III: Data Structures
+\# Computer Science III: Data Structures
 
 ## Summary
 Welcome to my Computer Science Data Structures GitHub repository! This repository contains a diverse set of data structure and computer science assignments. Covered topics include file I/O, generics, inheritance, stacks, queues, linked lists, trees, sorting algorithms, GUI programming using AWT, and even networking and threading.
