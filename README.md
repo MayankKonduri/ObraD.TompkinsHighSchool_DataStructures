@@ -1,14 +1,14 @@
 # Computer Science III: Data Structures
 
 ## Summary
-Welcome to my Computer Science Data Structures GitHub repository! This repository contains a diverse set of data structure and computer science concepts. Covered topics include file I/O, generics, inheritance, stacks, queues, linked lists, trees, sorting algorithms, GUI programming using AWT, and even networking and threading.
+Welcome to my Computer Science Data Structures GitHub repository! This repository contains a diverse set of data structure and computer science assignments. Covered topics include file I/O, generics, inheritance, stacks, queues, linked lists, trees, sorting algorithms, GUI programming using AWT, and even networking and threading.
 
 ## Folder Descriptions
 
-- **ChatServer-main**  
+- **ChatServer**  
   Contains multithreaded networking programs for implementing basic chat server functionality.
 
-- **Connect4Repo-main 2**  
+- **Connect4Repo**  
   A GUI-based Connect 4 game that includes logic for grid management and win condition checking.
 
 - **GUI-AWT**  
@@ -24,10 +24,7 @@ Welcome to my Computer Science Data Structures GitHub repository! This repositor
   Contains assignments implementing linked list structures and binary tree algorithms.
 
 - **Pathing**  
-  Includes projects related to pathfinding algorithms, potentially involving graph traversal.
-
-- **Pre Data-Structures**  
-  Introductory exercises and foundational Java concepts that precede data structures.
+  Includes projects related to pathfinding algorithms, involving graph traversal.
 
 - **Sets-Maps**  
   Explores Java’s Set and Map interfaces for managing collections of unique and key-value paired data.
